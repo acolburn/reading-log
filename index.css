@@ -1,6 +1,17 @@
 body {
-  color: #333;
+  background-color: #f6e4f5;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+header {
+  font-size: 3.5rem;
+  text-align: center;
+  margin-bottom: 1em;
+  padding: 1em 0;
+  /* background-color: #bdceed; */
+  background-color: #f6e6e4;
+  border-radius: 5px;
+  box-shadow: 0px 0px 4px 1px grey;
 }
 
 .container {
@@ -9,10 +20,11 @@ body {
 }
 
 .card {
+  background-color: #f6e6e4;
   display: flex;
   width: 75vw;
   max-width: 500px;
-  box-shadow: 0px 0px 10px 1px #999;
+  box-shadow: 0px 0px 4px 1px grey;
   margin: 0 auto 15px auto;
   border-radius: 5px;
 }
@@ -24,6 +36,7 @@ body {
 }
 
 .card-right {
+  background-color: whitemoke;
   display: flex;
   flex-direction: column;
   justify-content: center;
