@@ -15,6 +15,45 @@ header {
   max-width: 500px;
 }
 
+/* search bar   */
+.search-container {
+  max-width: 500px;
+  display: flex;
+  position: relative;
+  align-items: center; /* Center items vertically */
+  margin: 1em auto;
+}
+
+.search-container input {
+  flex: 1; /* Allow input to take available space */
+  padding: 0.5em 1em; /* Extra padding for the icon */
+  border: 1px solid grey;
+  border-radius: 5px 0 0 5px;
+  border-right: none; /* Remove right border */
+  position: relative; /* For icon positioning */
+}
+
+.search-container input:focus {
+  border: 1px solid #007bff;
+}
+
+.search-container i {
+  position: absolute;
+  right: 4em; /* Icon position */
+  top: 30%;
+}
+
+.search-container button {
+  padding: 0.5em;
+  border: 1px solid grey;
+  border-left: none; /* Remove left border */
+  border-radius: 0 5px 5px 0; /* Round right corners */
+  background-color: #007bff; /* Button color */
+  color: white; /* Text color */
+  cursor: pointer; /* Cursor change on hover */
+}
+/* end search bar */
+
 .container {
   display: flex;
   flex-direction: column;
