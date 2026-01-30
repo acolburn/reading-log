@@ -115,3 +115,7 @@ onValue(booksInDB, function (snapshot) {
 function clearSearchDisplay() {
   document.getElementById("search-input").value = "";
 }
+
+function clearDisplay() {
+  document.getElementById("container").innerHTML = "";
+}
