@@ -14,11 +14,16 @@
 
   <body>
     <header>Al's Reading Log</header>
-    <form class="search-container">
-      <input type="text" placeholder="Enter Title; Author(s); Date (opt.)" />
+    <form id="search-container">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Enter Title; Author(s); Date (opt.)"
+      />
       <i class="fa-solid fa-magnifying-glass"></i>
-      <button type="submit">Search</button>
+      <button type="submit" id="search-button">Search</button>
     </form>
+    <p id="error-message"></p>
     <div class="container" id="container"></div>
     <script src="index.js" type="module"></script>
   </body>
