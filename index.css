@@ -53,7 +53,7 @@ header {
   cursor: pointer; /* Cursor change on hover */
 }
 
-#error-message {
+#message {
   text-align: center;
 }
 /* end search bar */

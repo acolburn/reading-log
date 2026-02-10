@@ -8,6 +8,8 @@ import {
   remove,
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
+const API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs";
+
 const appSettings = {
   databaseURL: "https://test-project-b83e9-default-rtdb.firebaseio.com/",
 };
@@ -15,6 +17,7 @@ const appSettings = {
 const app = initializeApp(appSettings);
 const database = getDatabase(app);
 const booksInDB = ref(database, "books");
+console.log("helloworld");
 
 const searchContainer = document.getElementById("search-container");
 let searchArray = [];
@@ -30,7 +33,7 @@ searchContainer.addEventListener("submit", function (e) {
   const title = searchArray[0].trim();
   const author =
     searchArray[1].trim() != "[author]" ? searchArray[1].trim() : "";
-  const searchPhrase = `${title}+inauthor:${searchArray[1].trim()}`;
+  const searchPhrase = `${title}+inauthor:${searchArray[1].trim()}&key=${API_KEY}`;
   searchGoogleBooks(searchPhrase);
 });
 
@@ -71,16 +74,23 @@ function searchGoogleBooks(searchPhrase) {
         };
 
         // Add result to database
-        push(booksInDB, bookDetails);
+        // push(booksInDB, bookDetails);
+        document.getElementById("message").innerHTML = `<section class="card">
+    	<img src="${bookDetails.image_url}">
+        <div class="card-right">
+        <h2>${bookDetails.title}</h2>
+        <h2>${bookDetails.author}</h3>
+        <p>${bookDetails.date}</p>
+    </section>`;
+        // push(booksInDB, bookDetails);
         clearSearchDisplay();
       } else {
-        document.getElementById("error-message").innerHTML =
-          "No results found.";
+        document.getElementById("message").innerHTML = "No results found.";
       }
     })
     .catch((error) => {
       console.error("Error fetching data:", error);
-      document.getElementById("error-message").innerHTML =
+      document.getElementById("message").innerHTML =
         "There was an error fetching the book data.";
     });
 }
