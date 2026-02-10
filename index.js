@@ -22,22 +22,7 @@ const searchContainer = document.getElementById("search-container");
 const searchResult = document.getElementById("search-result");
 let searchArray = [];
 
-//Begin Database Search
-// Event listener triggered when Search button clicked
-// Input text parsed into title, author, (and date)
-// then used to create phrase for searching Google Books
-searchContainer.addEventListener("submit", function (e) {
-  e.preventDefault();
-  const searchInput = document.getElementById("search-input").value;
-  searchArray = searchInput.split(";");
-  const title = searchArray[0].trim();
-  const author =
-    searchArray[1].trim() != "[author]" ? searchArray[1].trim() : "";
-  const searchPhrase = `${title}+inauthor:${searchArray[1].trim()}`;
-  searchGoogleBooks(searchPhrase);
-});
-
-// Parses date from input text; see above
+// Parses date from input text
 function getDate() {
   let date = "";
   if (searchArray.length > 2) {
@@ -51,61 +36,80 @@ function getDate() {
   return date;
 }
 
+//Begin Database Search
+// Event listener triggered when Search button clicked
+// Input text parsed into title, author, (and date)
+// then used to create phrase for searching Google Books
+searchContainer.addEventListener("submit", function (e) {
+  e.preventDefault();
+  let title = "";
+  let author = "";
+  const searchInput = document.getElementById("search-input").value;
+  searchArray = searchInput.split(";");
+  if (searchArray.length > 0) {
+    title = searchArray[0].trim();
+  }
+  if (searchArray.length > 1) {
+    author = searchArray[1].trim() != "[author]" ? searchArray[1].trim() : "";
+  }
+  const searchPhrase = `${title}+inauthor:${author}`;
+  searchGoogleBooks(searchPhrase);
+});
+
 // searchPhrase is phrase created above for searching Google Books
-function searchGoogleBooks(searchPhrase) {
+async function searchGoogleBooks(searchPhrase) {
   const query = encodeURIComponent(searchPhrase);
   const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${API_KEY}`;
   const dateBookRead = getDate();
 
   // Fetch the data from the Google Books API
-  fetch(apiUrl)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.items && data.items.length > 0) {
-        const firstItem = data.items[0];
-        const bookDetails = {
-          title: firstItem.volumeInfo.title,
-          author: firstItem.volumeInfo.authors.join(", "),
-          image_url: firstItem.volumeInfo.imageLinks?.smallThumbnail || "",
-          date: dateBookRead,
+  let response = await fetch(apiUrl);
+  if (response.status === 429) {
+    searchResult.innerHTML =
+      "<h4>Too Many Requests: Please try again later.</h4>";
+  } else if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  let data = await response.json();
 
-          description:
-            firstItem.volumeInfo.description || "No description available.",
-        };
+  if (data.items && data.items.length > 0) {
+    const bookDetails = {
+      title: firstItem.volumeInfo.title,
+      author: firstItem.volumeInfo.authors.join(", "),
+      image_url: firstItem.volumeInfo.imageLinks?.smallThumbnail || "",
+      date: dateBookRead,
+      description:
+        firstItem.volumeInfo.description || "No description available.",
+    };
 
-        searchResult.innerHTML = `<section  class="card">
-    	<img src="${bookDetails.image_url}">
-        <div class="card-right" id="result">
-        <h2>${bookDetails.title}</h2>
-        <h2>${bookDetails.author}</h3>
-        <p>${bookDetails.date}</p>
-      </section>`;
-        // push(booksInDB, bookDetails);
-        // Create a new button
-        const newButton = document.createElement("button");
+    searchResult.innerHTML = `
+        <section  class="card">
+    	    <img src="${bookDetails.image_url}">
+          <div class="card-right" id="result">
+          <h2>${bookDetails.title}</h2>
+          <h2>${bookDetails.author}</h3>
+          <p>${bookDetails.date}</p>
+        </section>`;
+    // Create a new button
+    const newButton = document.createElement("button");
 
-        // Set the button's properties
-        newButton.id = "add-button";
-        newButton.textContent = "Add";
+    // Set the button's properties
+    newButton.id = "add-button";
+    newButton.textContent = "Add";
 
-        // Add the button to the container in the DOM
-        document.getElementById("result").appendChild(newButton);
+    // Add the button to the container in the DOM
+    document.getElementById("result").appendChild(newButton);
 
-        // Add an event listener to the dynamically created button
-        newButton.addEventListener("click", function () {
-          // Add result to database
-          push(booksInDB, bookDetails);
-        });
-        clearSearchDisplay();
-      } else {
-        searchResult.innerHTML = "No results found.";
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching data:", error);
-      document.getElementById("message").innerHTML =
-        "There was an error fetching the book data.";
+    // Add an event listener to the dynamically created button
+    newButton.addEventListener("click", function () {
+      // Add result to database
+      push(booksInDB, bookDetails);
     });
+    clearSearchDisplay();
+  } else {
+    searchResult.innerHTML =
+      '<h2 style="text-align: center;">No results found.</h2>';
+  }
 }
 
 // End Database Search
