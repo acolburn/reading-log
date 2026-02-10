@@ -1,4 +1,6 @@
 // import { booklist } from "/data.js";
+const API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs";
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import {
   getDatabase,
@@ -7,8 +9,6 @@ import {
   onValue,
   remove,
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-
-const API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs";
 
 const appSettings = {
   databaseURL: "https://test-project-b83e9-default-rtdb.firebaseio.com/",
