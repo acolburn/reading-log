@@ -71,8 +71,10 @@ async function searchGoogleBooks(searchPhrase) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   let data = await response.json();
+  console.log(data.items);
 
   if (data.items && data.items.length > 0) {
+    const firstItem = data.items[0];
     const bookDetails = {
       title: firstItem.volumeInfo.title,
       author: firstItem.volumeInfo.authors.join(", "),
