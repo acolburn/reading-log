@@ -17,9 +17,9 @@ const appSettings = {
 const app = initializeApp(appSettings);
 const database = getDatabase(app);
 const booksInDB = ref(database, "books");
-console.log("helloworld");
 
 const searchContainer = document.getElementById("search-container");
+const searchResult = document.getElementById("search-result");
 let searchArray = [];
 
 //Begin Database Search
@@ -33,7 +33,7 @@ searchContainer.addEventListener("submit", function (e) {
   const title = searchArray[0].trim();
   const author =
     searchArray[1].trim() != "[author]" ? searchArray[1].trim() : "";
-  const searchPhrase = `${title}+inauthor:${searchArray[1].trim()}&key=${API_KEY}`;
+  const searchPhrase = `${title}+inauthor:${searchArray[1].trim()}`;
   searchGoogleBooks(searchPhrase);
 });
 
@@ -54,7 +54,7 @@ function getDate() {
 // searchPhrase is phrase created above for searching Google Books
 function searchGoogleBooks(searchPhrase) {
   const query = encodeURIComponent(searchPhrase);
-  const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}`;
+  const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${API_KEY}`;
   const dateBookRead = getDate();
 
   // Fetch the data from the Google Books API
@@ -73,19 +73,32 @@ function searchGoogleBooks(searchPhrase) {
             firstItem.volumeInfo.description || "No description available.",
         };
 
-        // Add result to database
-        // push(booksInDB, bookDetails);
-        document.getElementById("message").innerHTML = `<section class="card">
+        searchResult.innerHTML = `<section  class="card">
     	<img src="${bookDetails.image_url}">
-        <div class="card-right">
+        <div class="card-right" id="result">
         <h2>${bookDetails.title}</h2>
         <h2>${bookDetails.author}</h3>
         <p>${bookDetails.date}</p>
-    </section>`;
+      </section>`;
         // push(booksInDB, bookDetails);
+        // Create a new button
+        const newButton = document.createElement("button");
+
+        // Set the button's properties
+        newButton.id = "add-button";
+        newButton.textContent = "Add";
+
+        // Add the button to the container in the DOM
+        document.getElementById("result").appendChild(newButton);
+
+        // Add an event listener to the dynamically created button
+        newButton.addEventListener("click", function () {
+          // Add result to database
+          push(booksInDB, bookDetails);
+        });
         clearSearchDisplay();
       } else {
-        document.getElementById("message").innerHTML = "No results found.";
+        searchResult.innerHTML = "No results found.";
       }
     })
     .catch((error) => {

@@ -43,7 +43,7 @@ header {
   top: 30%;
 }
 
-#search-container button {
+button {
   padding: 0.5em;
   border: 1px solid grey;
   border-left: none; /* Remove left border */
