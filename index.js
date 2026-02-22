@@ -106,6 +106,7 @@ async function searchGoogleBooks(searchPhrase) {
     newButton.addEventListener("click", function () {
       // Add result to database
       push(booksInDB, bookDetails);
+      searchResult.innerHtml = ""
     });
     clearSearchDisplay();
   } else {
