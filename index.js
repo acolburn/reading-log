@@ -110,11 +110,12 @@ async function searchGoogleBooks(searchPhrase) {
         .then(() => {
           console.log("Book data pushed successfully");
           alert("Book data pushed successfully!"); // Visual feedback
-          searchResults.innerHTML = "";
+          searchResult.innerHTML = "";
         })
         .catch((error) => {
           console.error("Error pushing book data:", error);
           alert("Error pushing book data: " + error.message); // Display the error
+          searchResult.innerHTML = "";
         });
     });
     clearSearchDisplay();
