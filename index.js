@@ -105,9 +105,18 @@ async function searchGoogleBooks(searchPhrase) {
     // Add an event listener to the dynamically created button
     newButton.addEventListener("click", function () {
       // Add result to database
-      push(booksInDB, bookDetails);
+      push(booksInDB, bookDetails)
+      .then(()=>{
+      console.log("Book data pushed successfully");
+        alert("Book data pushed successfully!"); // Visual feedback
+        })
+      .catch((error) => {
+      console.error("Error pushing book data:", error);
+        alert("Error pushing book data: " + error.message); // Display the error
+        })
     });
     clearSearchDisplay();
+    searchResult.innerHTML = "";
   } else {
     searchResult.innerHTML =
       '<h2 style="text-align: center;">No results found.</h2>';
