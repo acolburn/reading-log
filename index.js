@@ -110,6 +110,7 @@ async function searchGoogleBooks(searchPhrase) {
         .then(() => {
           console.log("Book data pushed successfully");
           alert("Book data pushed successfully!"); // Visual feedback
+          searchResults.innerHTML = "";
         })
         .catch((error) => {
           console.error("Error pushing book data:", error);
@@ -117,7 +118,6 @@ async function searchGoogleBooks(searchPhrase) {
         });
     });
     clearSearchDisplay();
-    searchResult.innerHTML = "";
   } else {
     searchResult.innerHTML =
       '<h2 style="text-align: center;">No results found.</h2>';
