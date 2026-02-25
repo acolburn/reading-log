@@ -82,6 +82,7 @@ function createBookCard(book, includeButton = false) {
         <h2>${book.author}</h2>
         <p>${book.date}</p>
         ${descriptionHtml}
+        <div id="button-slot"></div>
       </div>
     </section>
   `;
@@ -157,24 +158,46 @@ async function searchGoogleBooks(searchPhrase) {
       return;
     }
 
-    const firstItem = data.items[0];
-    const bookDetails = {
-      title: firstItem.volumeInfo.title,
-      author: (firstItem.volumeInfo.authors || []).join(", "),
-      image_url: firstItem.volumeInfo.imageLinks?.smallThumbnail || "",
-      date: DOM.searchDate || "[Date not recorded]",
-      description:
-        firstItem.volumeInfo.description || "No description available.",
-    };
+    // Grabs only the first 4 items (or fewer if the array is small)
+    for (const book of data.items.slice(0, 4)) {
+      // 1. Prepare data
+      const bookDetails = {
+        title: book.volumeInfo.title,
+        author: (book.volumeInfo.authors || []).join(", "),
+        image_url: book.volumeInfo.imageLinks?.smallThumbnail || "",
+        date: DOM.searchDate || "[Date not recorded]",
+        description: book.volumeInfo.description || "No description available.",
+      };
 
-    DOM.searchResult.innerHTML = createBookCard(bookDetails, true);
+      // 2. Create the Card Container
+      const cardContainer = document.createElement("div");
+      cardContainer.className = "book-card"; // Apply your CSS here
 
-    const addButton = document.createElement("button");
-    addButton.id = "add-button";
-    addButton.textContent = "Add";
-    document.getElementById("result").appendChild(addButton);
+      // 3. Fill the container with the HTML from your function
+      cardContainer.innerHTML = createBookCard(bookDetails, true);
 
-    addButton.addEventListener("click", () => addBookToDatabase(bookDetails));
+      // 4. Create the Button
+      const addButton = document.createElement("button");
+      addButton.textContent = "Add";
+      addButton.className = "btn-add";
+
+      // 5. ATTACH TO CARD (This is the fix!)
+      const buttonSlot = cardContainer.querySelector("#button-slot");
+      buttonSlot.appendChild(addButton);
+
+      // 6. ATTACH CARD TO PAGE
+      DOM.searchResult.appendChild(cardContainer);
+
+      // 7. Add Listener
+      addButton.addEventListener("click", () => addBookToDatabase(bookDetails));
+    }
+    // Add an hr to separate the search results from the main book list
+    // REPLACE THIS:
+    // DOM.searchResult.innerHTML += "<hr>";
+
+    // WITH THIS:
+    const hr = document.createElement("hr");
+    DOM.searchResult.appendChild(hr);
   } catch (error) {
     console.error("Search error:", error);
     DOM.searchResult.innerHTML =
