@@ -1,33 +1,20 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+import {
+  appSettings,
+  app,
+  auth,
+  authCreateAccountWithEmail,
+  authSignInWithEmail,
+} from "./admin.js";
+
 import {
   getDatabase,
   ref,
   push,
   onValue,
-  remove,
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-
-const appSettings = {
-  apiKey: "AIzaSyCK6qpeB-3TfIPoyQ2cQZ_kp7QJrOs4RD4",
-  authDomain: "test-project-b83e9.firebaseapp.com",
-  databaseURL: "https://test-project-b83e9-default-rtdb.firebaseio.com",
-  projectId: "test-project-b83e9",
-  storageBucket: "test-project-b83e9.firebasestorage.app",
-  messagingSenderId: "1072857068612",
-  appId: "1:1072857068612:web:75e89df3d722d593cfb811",
-};
 
 const GOOGLE_BOOKS_API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs"; // for google books
 
-const app = initializeApp(appSettings); // initialize firebase
-const auth = getAuth(app);
 const database = getDatabase(app);
 const booksInDB = ref(database, "books");
 
@@ -170,106 +157,6 @@ onValue(booksInDB, function (snapshot) {
   document.getElementById("container").innerHTML = booklistHtml;
 });
 
-btnCreateUser.addEventListener("click", authCreateAccountWithEmail);
-function authCreateAccountWithEmail() {
-  const email = emailInputEl.value;
-  const password = passwordInputEl.value;
-  createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      showLoggedInView();
-      // clearFields()
-    })
-    .catch((error) => {
-      const code = error?.code || error?.message || "";
-      switch (code) {
-        // Sign up / create account
-        case "auth/email-already-in-use":
-          alert(
-            "Error: This email is already registered. Try signing in or use a different email.",
-          );
-        case "auth/invalid-email":
-          alert("Error: Please enter a valid email address.");
-        case "auth/weak-password":
-          alert(
-            "Error: Password is too weak. Use at least 6 characters with a mix of letters and numbers.",
-          );
-        case "auth/operation-not-allowed":
-          alert("Error: This sign-up method is not enabled. Contact support.");
-
-        // Sign in
-        case "auth/user-not-found":
-          alert(
-            "Error: No account found with that email. Please sign up first.",
-          );
-        case "auth/too-many-requests":
-          alert("Error:Too many attempts. Please wait a moment and try again.");
-
-        // Reset password / verify
-        case "auth/user-disabled":
-          alert("Error: This account has been disabled. Contact support.");
-        case "auth/missing-email":
-          alert("Error: Please provide an email address.");
-
-        // Fallback
-        default:
-          // If Firebase provides a human-readable message, prefer it (but don't leak internal codes)
-          return (
-            error?.message || "An unexpected error occurred. Please try again."
-          );
-      }
-    });
-}
-
-btnLoginUser.addEventListener("click", authSignInWithEmail);
-function authSignInWithEmail() {
-  const email = emailInputEl.value;
-  const password = passwordInputEl.value;
-
-  signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      // Signed in
-      const user = userCredential.user;
-      showLoggedInView();
-      // clearFields()
-    })
-    .catch((error) => {
-      const code = error?.code || error?.message || "";
-      switch (code) {
-        // Sign up / create account
-        case "auth/email-already-in-use":
-          alert("Error: Please enter a valid email address.");
-        case "auth/operation-not-allowed":
-          alert("Error: This sign-up method is not enabled. Contact support.");
-
-        // Sign in
-        case "auth/user-not-found":
-          alert(
-            "Error: No account found with that email. Please sign up first.",
-          );
-        case "auth/wrong-password":
-          alert("Error: Incorrect password. Try again or reset your password.");
-        case "auth/too-many-requests":
-          alert(
-            "Error: Too many attempts. Please wait a moment and try again.",
-          );
-
-        // Reset password / verify
-        case "auth/user-disabled":
-          alert("Error: This account has been disabled. Contact support.");
-        case "auth/missing-email":
-          alert("Error: Please provide an email address.");
-
-        // Fallback
-        default:
-          // If Firebase provides a human-readable message, prefer it (but don't leak internal codes)
-          return (
-            alert(error?.message) ||
-            alert("An unexpected error occurred. Please try again.")
-          );
-      }
-    });
-}
-
 function clearSearchDisplay() {
   document.getElementById("search-input").value = "";
 }
@@ -289,5 +176,23 @@ function showLoggedOutView() {
   loggedInView.style.display = "none";
   loggedOutView.style.display = "flex";
 }
+
+btnCreateUser.addEventListener("click", async () => {
+  const email = emailInputEl.value;
+  const password = passwordInputEl.value;
+  const result = await authCreateAccountWithEmail(email, password);
+  if (result == true) {
+    showLoggedInView();
+  }
+});
+
+btnLoginUser.addEventListener("click", async () => {
+  const email = emailInputEl.value;
+  const password = passwordInputEl.value;
+  const result = await authSignInWithEmail(email, password);
+  if (result == true) {
+    showLoggedInView();
+  }
+});
 
 showLoggedOutView();
