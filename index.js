@@ -45,7 +45,35 @@ function parseSearchInput(input) {
   };
 }
 
+// function createBookCard(book, includeButton = false) {
+//   const html = `
+//     <section class="card">
+//       <img src="${book.image_url}" alt="${book.title}">
+//       <div class="card-right" ${includeButton ? 'id="result"' : ""}>
+//         <h2>${book.title}</h2>
+//         <h2>${book.author}</h2>
+//         <p>${book.date}</p>
+//       </div>
+//     </section>
+//   `;
+//   return html;
+// }
+
 function createBookCard(book, includeButton = false) {
+  const descriptionHtml = book.description
+    ? `
+      <div class="description-toggle">
+        <button class="description-btn" onclick="toggleDescription(this); return false;">
+          <span class="description-text">Description</span>
+          <span class="triangle">▼</span>
+        </button>
+      </div>
+      <div class="description-content" style="display: none;">
+        <p>${book.description}</p>
+      </div>
+    `
+    : "";
+
   const html = `
     <section class="card">
       <img src="${book.image_url}" alt="${book.title}">
@@ -53,11 +81,31 @@ function createBookCard(book, includeButton = false) {
         <h2>${book.title}</h2>
         <h2>${book.author}</h2>
         <p>${book.date}</p>
+        ${descriptionHtml}
       </div>
     </section>
   `;
   return html;
 }
+
+// There are other ways to do this, but what's happening here is that the onclick="toggleDescription(this)"
+// HTML generated when there's a description (see createBookCard() above) is a function existing in
+// the global scope. It can't access code in this module's scope. window.toggleDescription makes the code
+// accessible from the global scope.
+window.toggleDescription = function (button) {
+  const descriptionContent = button.closest(
+    ".description-toggle",
+  ).nextElementSibling;
+  const triangle = button.querySelector(".triangle");
+
+  if (descriptionContent.style.display === "none") {
+    descriptionContent.style.display = "block";
+    triangle.textContent = "▲";
+  } else {
+    descriptionContent.style.display = "none";
+    triangle.textContent = "▼";
+  }
+};
 
 function clearInput() {
   DOM.searchInput.value = "";
