@@ -13,186 +13,165 @@ import {
   onValue,
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-const GOOGLE_BOOKS_API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs"; // for google books
+// Configuration
+const GOOGLE_BOOKS_API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs";
+const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
+// DOM Selectors
+const DOM = {
+  btnCreateUser: document.getElementById("create-user"),
+  btnLoginUser: document.getElementById("login-user"),
+  emailInput: document.getElementById("email"),
+  passwordInput: document.getElementById("password"),
+  searchContainer: document.getElementById("search-container"),
+  searchInput: document.getElementById("search-input"),
+  searchResult: document.getElementById("search-result"),
+  loggedInView: document.getElementById("logged-in-view"),
+  loggedOutView: document.getElementById("logged-out-view"),
+  container: document.getElementById("container"),
+};
+
+// Database
 const database = getDatabase(app);
 const booksInDB = ref(database, "books");
 
-const btnCreateUser = document.getElementById("create-user");
-const btnLoginUser = document.getElementById("login-user");
-const emailInputEl = document.getElementById("email");
-const passwordInputEl = document.getElementById("password");
-const searchContainer = document.getElementById("search-container");
-
-const searchResult = document.getElementById("search-result");
-const loggedInView = document.getElementById("logged-in-view");
-const loggedOutView = document.getElementById("logged-out-view");
-let searchArray = [];
-
-// Parses date from input text
-function getDate() {
-  let date = "";
-  if (searchArray.length > 2) {
-    date =
-      searchArray[2].trim() != ""
-        ? searchArray[2].trim()
-        : "[Date not recorded]";
-  } else {
-    date = "[Date not recorded]";
-  }
-  return date;
+// Utility Functions
+function parseSearchInput(input) {
+  const parts = input.split(";").map((part) => part.trim());
+  return {
+    title: parts[0] || "",
+    author: parts[1] && parts[1] !== "[author]" ? parts[1] : "",
+    date: parts[2] || "[Date not recorded]",
+  };
 }
 
-//Begin Database Search
-// Event listener triggered when Search button clicked
-// Input text parsed into title, author, (and date)
-// then used to create phrase for searching Google Books
-searchContainer.addEventListener("submit", function (e) {
-  e.preventDefault();
-  let title = "";
-  let author = "";
-  const searchInput = document.getElementById("search-input").value;
-  searchArray = searchInput.split(";");
-  if (searchArray.length > 0) {
-    title = searchArray[0].trim();
-  }
-  if (searchArray.length > 1) {
-    author = searchArray[1].trim() != "[author]" ? searchArray[1].trim() : "";
-  }
-  const searchPhrase = `${title}+inauthor:${author}`;
-  searchGoogleBooks(searchPhrase);
-});
+function createBookCard(book, includeButton = false) {
+  const html = `
+    <section class="card">
+      <img src="${book.image_url}" alt="${book.title}">
+      <div class="card-right" ${includeButton ? 'id="result"' : ""}>
+        <h2>${book.title}</h2>
+        <h2>${book.author}</h2>
+        <p>${book.date}</p>
+      </div>
+    </section>
+  `;
+  return html;
+}
 
-// searchPhrase is phrase created above for searching Google Books
+function clearInput() {
+  DOM.searchInput.value = "";
+}
+
+function clearDisplay() {
+  DOM.container.innerHTML = "";
+}
+
+function showView(view) {
+  DOM.loggedInView.style.display = view === "loggedIn" ? "block" : "none";
+  DOM.loggedOutView.style.display = view === "loggedIn" ? "none" : "flex";
+}
+
+async function handleAuth(authFn) {
+  const email = DOM.emailInput.value;
+  const password = DOM.passwordInput.value;
+  const result = await authFn(email, password);
+  if (result) {
+    showView("loggedIn");
+    DOM.emailInput.value = "";
+    DOM.passwordInput.value = "";
+  }
+}
+
+// Search Google Books
 async function searchGoogleBooks(searchPhrase) {
   const query = encodeURIComponent(searchPhrase);
-  const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${GOOGLE_BOOKS_API_KEY}`;
-  const dateBookRead = getDate();
+  const apiUrl = `${GOOGLE_BOOKS_API_URL}?q=${query}&key=${GOOGLE_BOOKS_API_KEY}`;
 
-  // Fetch the data from the Google Books API
-  let response = await fetch(apiUrl);
-  if (response.status === 429) {
-    searchResult.innerHTML =
-      "<h4>Too Many Requests: Please try again later.</h4>";
-  } else if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  let data = await response.json();
+  try {
+    const response = await fetch(apiUrl);
 
-  if (data.items && data.items.length > 0) {
+    if (response.status === 429) {
+      DOM.searchResult.innerHTML =
+        "<h4>Too Many Requests: Please try again later.</h4>";
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+      DOM.searchResult.innerHTML =
+        '<h2 style="text-align: center;">No results found.</h2>';
+      return;
+    }
+
     const firstItem = data.items[0];
     const bookDetails = {
       title: firstItem.volumeInfo.title,
-      author: firstItem.volumeInfo.authors.join(", "),
+      author: (firstItem.volumeInfo.authors || []).join(", "),
       image_url: firstItem.volumeInfo.imageLinks?.smallThumbnail || "",
-      date: dateBookRead,
+      date: DOM.searchDate || "[Date not recorded]",
       description:
         firstItem.volumeInfo.description || "No description available.",
     };
 
-    searchResult.innerHTML = `
-        <section  class="card">
-    	    <img src="${bookDetails.image_url}">
-          <div class="card-right" id="result">
-          <h2>${bookDetails.title}</h2>
-          <h2>${bookDetails.author}</h3>
-          <p>${bookDetails.date}</p>
-        </section>`;
-    // Create a new button
-    const newButton = document.createElement("button");
+    DOM.searchResult.innerHTML = createBookCard(bookDetails, true);
 
-    // Set the button's properties
-    newButton.id = "add-button";
-    newButton.textContent = "Add";
+    const addButton = document.createElement("button");
+    addButton.id = "add-button";
+    addButton.textContent = "Add";
+    document.getElementById("result").appendChild(addButton);
 
-    // Add the button to the container in the DOM
-    document.getElementById("result").appendChild(newButton);
-
-    // Add an event listener to the dynamically created button
-    newButton.addEventListener("click", function () {
-      // Add result to database
-
-      push(booksInDB, bookDetails)
-        .then(() => {
-          alert("Book data pushed successfully!"); // Visual feedback
-          searchResult.innerHTML = "";
-        })
-        .catch((error) => {
-          console.error("Error pushing book data:", error);
-          alert("Error pushing book data: " + error.message); // Display the error
-          searchResult.innerHTML = "";
-        });
-    });
-    clearSearchDisplay();
-  } else {
-    searchResult.innerHTML =
-      '<h2 style="text-align: center;">No results found.</h2>';
+    addButton.addEventListener("click", () => addBookToDatabase(bookDetails));
+  } catch (error) {
+    console.error("Search error:", error);
+    DOM.searchResult.innerHTML =
+      "<h4>An error occurred. Please try again.</h4>";
   }
 }
 
-// End Database Search
+function addBookToDatabase(bookDetails) {
+  push(booksInDB, bookDetails)
+    .then(() => {
+      alert("Book added successfully!");
+      DOM.searchResult.innerHTML = "";
+      clearInput();
+    })
+    .catch((error) => {
+      console.error("Error adding book:", error);
+      alert(`Error adding book: ${error.message}`);
+    });
+}
 
-//update display:
-onValue(booksInDB, function (snapshot) {
+// Display Books from Database
+onValue(booksInDB, (snapshot) => {
   clearDisplay();
 
-  let booksArray = Object.values(snapshot.val());
-  // reverse order from db, where new items are appended to database
-  // we want new items displayed first
-  booksArray = booksArray.reverse();
-  const booklistHtml = booksArray
-    .map(function (book) {
-      return `
-    <section class="card">
-    	<img src="${book.image_url}">
-        <div class="card-right">
-        <h2>${book.title}</h2>
-        <h2>${book.author}</h3>
-        <p>${book.date}</p>
-    </section>
-    `;
-    })
-    .join("");
+  if (!snapshot.val()) return;
 
-  document.getElementById("container").innerHTML = booklistHtml;
+  const booksArray = Object.values(snapshot.val()).reverse();
+  const booklistHtml = booksArray.map((book) => createBookCard(book)).join("");
+  DOM.container.innerHTML = booklistHtml;
 });
 
-function clearSearchDisplay() {
-  document.getElementById("search-input").value = "";
-}
-
-function clearDisplay() {
-  document.getElementById("container").innerHTML = "";
-}
-
-function showLoggedInView() {
-  // search form visible when logged in
-  loggedInView.style.display = "block";
-  loggedOutView.style.display = "none";
-}
-
-function showLoggedOutView() {
-  //login view form visible when logged out
-  loggedInView.style.display = "none";
-  loggedOutView.style.display = "flex";
-}
-
-btnCreateUser.addEventListener("click", async () => {
-  const email = emailInputEl.value;
-  const password = passwordInputEl.value;
-  const result = await authCreateAccountWithEmail(email, password);
-  if (result == true) {
-    showLoggedInView();
-  }
+// Event Listeners
+DOM.searchContainer.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const { title, author, date } = parseSearchInput(DOM.searchInput.value);
+  DOM.searchDate = date; // Store for later use in searchGoogleBooks
+  const searchPhrase = `${title}${author ? `+inauthor:${author}` : ""}`;
+  searchGoogleBooks(searchPhrase);
 });
 
-btnLoginUser.addEventListener("click", async () => {
-  const email = emailInputEl.value;
-  const password = passwordInputEl.value;
-  const result = await authSignInWithEmail(email, password);
-  if (result == true) {
-    showLoggedInView();
-  }
-});
+DOM.btnCreateUser.addEventListener("click", () =>
+  handleAuth(authCreateAccountWithEmail),
+);
+DOM.btnLoginUser.addEventListener("click", () =>
+  handleAuth(authSignInWithEmail),
+);
 
-showLoggedOutView();
+showView("loggedOut");
