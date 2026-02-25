@@ -1,6 +1,4 @@
-console.log("1index.js loaded");
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-console.log("2Firebase App imported successfully");
 import {
   getDatabase,
   ref,
@@ -8,7 +6,6 @@ import {
   onValue,
   remove,
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-console.log("3firebase-database imorted");
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -16,7 +13,6 @@ import {
   signOut,
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-console.log("4firebase-auth imported");
 
 const appSettings = {
   apiKey: "AIzaSyCK6qpeB-3TfIPoyQ2cQZ_kp7QJrOs4RD4",
@@ -31,11 +27,8 @@ const appSettings = {
 const GOOGLE_BOOKS_API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs"; // for google books
 
 const app = initializeApp(appSettings); // initialize firebase
-console.log(`app: ${app}`);
 const auth = getAuth(app);
-console.log(`auth: ${auth}`);
 const database = getDatabase(app);
-console.log(`database: ${database}`);
 const booksInDB = ref(database, "books");
 
 const btnCreateUser = document.getElementById("create-user");
@@ -98,7 +91,6 @@ async function searchGoogleBooks(searchPhrase) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   let data = await response.json();
-  console.log(data.items);
 
   if (data.items && data.items.length > 0) {
     const firstItem = data.items[0];
@@ -135,7 +127,6 @@ async function searchGoogleBooks(searchPhrase) {
 
       push(booksInDB, bookDetails)
         .then(() => {
-          console.log("Book data pushed successfully");
           alert("Book data pushed successfully!"); // Visual feedback
           searchResult.innerHTML = "";
         })
@@ -179,25 +170,55 @@ onValue(booksInDB, function (snapshot) {
   document.getElementById("container").innerHTML = booklistHtml;
 });
 
-// btnCreateUser.addEventListener("click", authCreateAccountWithEmail);
-btnCreateUser.addEventListener("click", function () {
-  console.log("create user button clicked");
+btnCreateUser.addEventListener("click", authCreateAccountWithEmail);
+function authCreateAccountWithEmail() {
   const email = emailInputEl.value;
   const password = passwordInputEl.value;
-  console.log("email: ", email);
-  console.log("Auth instance:", auth);
   createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      console.log("new account created?");
       showLoggedInView();
       // clearFields()
     })
     .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      console.error(`Error code: ${errorCode}. ${errorMessage}`);
+      const code = error?.code || error?.message || "";
+      switch (code) {
+        // Sign up / create account
+        case "auth/email-already-in-use":
+          alert(
+            "Error: This email is already registered. Try signing in or use a different email.",
+          );
+        case "auth/invalid-email":
+          alert("Error: Please enter a valid email address.");
+        case "auth/weak-password":
+          alert(
+            "Error: Password is too weak. Use at least 6 characters with a mix of letters and numbers.",
+          );
+        case "auth/operation-not-allowed":
+          alert("Error: This sign-up method is not enabled. Contact support.");
+
+        // Sign in
+        case "auth/user-not-found":
+          alert(
+            "Error: No account found with that email. Please sign up first.",
+          );
+        case "auth/too-many-requests":
+          alert("Error:Too many attempts. Please wait a moment and try again.");
+
+        // Reset password / verify
+        case "auth/user-disabled":
+          alert("Error: This account has been disabled. Contact support.");
+        case "auth/missing-email":
+          alert("Error: Please provide an email address.");
+
+        // Fallback
+        default:
+          // If Firebase provides a human-readable message, prefer it (but don't leak internal codes)
+          return (
+            error?.message || "An unexpected error occurred. Please try again."
+          );
+      }
     });
-});
+}
 
 btnLoginUser.addEventListener("click", authSignInWithEmail);
 function authSignInWithEmail() {
@@ -208,14 +229,44 @@ function authSignInWithEmail() {
     .then((userCredential) => {
       // Signed in
       const user = userCredential.user;
-      console.log(`Logged in successfully, ${user}`);
       showLoggedInView();
       // clearFields()
     })
     .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      console.error(`Error code: ${errorCode}. ${errorMessage}`);
+      const code = error?.code || error?.message || "";
+      switch (code) {
+        // Sign up / create account
+        case "auth/email-already-in-use":
+          alert("Error: Please enter a valid email address.");
+        case "auth/operation-not-allowed":
+          alert("Error: This sign-up method is not enabled. Contact support.");
+
+        // Sign in
+        case "auth/user-not-found":
+          alert(
+            "Error: No account found with that email. Please sign up first.",
+          );
+        case "auth/wrong-password":
+          alert("Error: Incorrect password. Try again or reset your password.");
+        case "auth/too-many-requests":
+          alert(
+            "Error: Too many attempts. Please wait a moment and try again.",
+          );
+
+        // Reset password / verify
+        case "auth/user-disabled":
+          alert("Error: This account has been disabled. Contact support.");
+        case "auth/missing-email":
+          alert("Error: Please provide an email address.");
+
+        // Fallback
+        default:
+          // If Firebase provides a human-readable message, prefer it (but don't leak internal codes)
+          return (
+            alert(error?.message) ||
+            alert("An unexpected error occurred. Please try again.")
+          );
+      }
     });
 }
 
