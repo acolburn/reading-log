@@ -15,16 +15,27 @@
   <body>
     <header>Al's Reading Log</header>
 
-    <form id="search-container">
-      <input
-        type="text"
-        id="search-input"
-        placeholder="Enter Title; Author(s); Date (opt.)"
-      />
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <button type="submit" id="search-button">Search</button>
-    </form>
-    <div id="search-result"></div>
+    <div id="logged-in-view">
+      <form id="search-container">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Enter Title; Author(s); Date (opt.)"
+        />
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <button type="submit" id="search-button">Search</button>
+      </form>
+      <div id="search-result"></div>
+    </div>
+
+    <div id="logged-out-view">
+      <form id="login-form" onsubmit="return false;">
+        <input type="text" id="email" placeholder="Enter email address" />
+        <input type="password" id="password" placeholder="Enter password" />
+        <button type="button" id="create-user">Create New User</button>
+        <button type="button" id="login-user">Login User</button>
+      </form>
+    </div>
 
     <div class="container" id="container"></div>
     <script src="index.js" type="module"></script>

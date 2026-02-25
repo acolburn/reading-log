@@ -1,7 +1,6 @@
-// import { booklist } from "/data.js";
-const API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs";
-
+console.log("1index.js loaded");
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+console.log("2Firebase App imported successfully");
 import {
   getDatabase,
   ref,
@@ -9,17 +8,45 @@ import {
   onValue,
   remove,
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+console.log("3firebase-database imorted");
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+console.log("4firebase-auth imported");
 
 const appSettings = {
-  databaseURL: "https://test-project-b83e9-default-rtdb.firebaseio.com/",
+  apiKey: "AIzaSyCK6qpeB-3TfIPoyQ2cQZ_kp7QJrOs4RD4",
+  authDomain: "test-project-b83e9.firebaseapp.com",
+  databaseURL: "https://test-project-b83e9-default-rtdb.firebaseio.com",
+  projectId: "test-project-b83e9",
+  storageBucket: "test-project-b83e9.firebasestorage.app",
+  messagingSenderId: "1072857068612",
+  appId: "1:1072857068612:web:75e89df3d722d593cfb811",
 };
 
-const app = initializeApp(appSettings);
+const GOOGLE_BOOKS_API_KEY = "AIzaSyDZ56VxOp9E3tcA22_bfz6tIex2qL8tOPs"; // for google books
+
+const app = initializeApp(appSettings); // initialize firebase
+console.log(`app: ${app}`);
+const auth = getAuth(app);
+console.log(`auth: ${auth}`);
 const database = getDatabase(app);
+console.log(`database: ${database}`);
 const booksInDB = ref(database, "books");
 
+const btnCreateUser = document.getElementById("create-user");
+const btnLoginUser = document.getElementById("login-user");
+const emailInputEl = document.getElementById("email");
+const passwordInputEl = document.getElementById("password");
 const searchContainer = document.getElementById("search-container");
+
 const searchResult = document.getElementById("search-result");
+const loggedInView = document.getElementById("logged-in-view");
+const loggedOutView = document.getElementById("logged-out-view");
 let searchArray = [];
 
 // Parses date from input text
@@ -59,7 +86,7 @@ searchContainer.addEventListener("submit", function (e) {
 // searchPhrase is phrase created above for searching Google Books
 async function searchGoogleBooks(searchPhrase) {
   const query = encodeURIComponent(searchPhrase);
-  const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${API_KEY}`;
+  const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${GOOGLE_BOOKS_API_KEY}`;
   const dateBookRead = getDate();
 
   // Fetch the data from the Google Books API
@@ -152,6 +179,46 @@ onValue(booksInDB, function (snapshot) {
   document.getElementById("container").innerHTML = booklistHtml;
 });
 
+// btnCreateUser.addEventListener("click", authCreateAccountWithEmail);
+btnCreateUser.addEventListener("click", function () {
+  console.log("create user button clicked");
+  const email = emailInputEl.value;
+  const password = passwordInputEl.value;
+  console.log("email: ", email);
+  console.log("Auth instance:", auth);
+  createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      console.log("new account created?");
+      showLoggedInView();
+      // clearFields()
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      console.error(`Error code: ${errorCode}. ${errorMessage}`);
+    });
+});
+
+btnLoginUser.addEventListener("click", authSignInWithEmail);
+function authSignInWithEmail() {
+  const email = emailInputEl.value;
+  const password = passwordInputEl.value;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      // Signed in
+      const user = userCredential.user;
+      console.log(`Logged in successfully, ${user}`);
+      showLoggedInView();
+      // clearFields()
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      console.error(`Error code: ${errorCode}. ${errorMessage}`);
+    });
+}
+
 function clearSearchDisplay() {
   document.getElementById("search-input").value = "";
 }
@@ -159,3 +226,17 @@ function clearSearchDisplay() {
 function clearDisplay() {
   document.getElementById("container").innerHTML = "";
 }
+
+function showLoggedInView() {
+  // search form visible when logged in
+  loggedInView.style.display = "block";
+  loggedOutView.style.display = "none";
+}
+
+function showLoggedOutView() {
+  //login view form visible when logged out
+  loggedInView.style.display = "none";
+  loggedOutView.style.display = "flex";
+}
+
+showLoggedOutView();
