@@ -11,6 +11,9 @@ import {
   ref,
   push,
   onValue,
+  get,
+  child,
+  update,
 } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
 // Configuration
@@ -59,7 +62,76 @@ function parseSearchInput(input) {
 //   return html;
 // }
 
-function createBookCard(book, includeButton = false) {
+// Call this inside fetchDescriptionFromGoogleBooks to add description to book's database entry
+async function updateBookDescriptionInDatabase(book) {
+  try {
+    const snapshot = await get(booksInDB);
+
+    // Loop through all books to find a match
+    snapshot.forEach((childSnapshot) => {
+      const dbBook = childSnapshot.val();
+
+      // Match by title and author
+      if (dbBook.title === book.title && dbBook.author === book.author) {
+        const bookRef = child(booksInDB, childSnapshot.key);
+        update(bookRef, { description: book.description });
+        console.log("Description updated!");
+      }
+    });
+  } catch (error) {
+    console.error("Error updating description:", error);
+  }
+}
+
+// Call this inside createBookCard when book.description is missing
+async function fetchDescriptionFromGoogleBooks(book) {
+  console.log("Fetching description for:", book.title);
+  try {
+    const searchPhrase = `${book.title}+inauthor:${book.author}`;
+    const query = encodeURIComponent(searchPhrase);
+    const apiUrl = `${GOOGLE_BOOKS_API_URL}?q=${query}&key=${GOOGLE_BOOKS_API_KEY}`;
+
+    const response = await fetch(apiUrl);
+
+    if (response.status === 429) {
+      DOM.searchResult.innerHTML =
+        "<h4>Too Many Requests: Please try again later.</h4>";
+      return;
+    }
+
+    if (!response.ok) {
+      console.log("API call failed");
+      return; // Exit early if the request failed
+    }
+
+    const data = await response.json();
+
+    if (data.items && data.items.length > 0) {
+      const firstBook = data.items[0];
+      const description = firstBook.volumeInfo.description;
+
+      if (description) {
+        book.description = description; // Update the book object
+        await updateBookDescriptionInDatabase(book);
+      }
+      // If description is undefined/null, we skip the assignment
+      // and book.description stays undefined (no card description shows)
+    }
+  } catch (error) {
+    console.log("Error fetching description:", error);
+    // Silently fail—no description is okay
+  }
+}
+
+// const booksBeingFetched = new Set();
+
+async function createBookCard(book, includeButton = false) {
+  // if (!book.description && !booksBeingFetched.has(book.id)) {
+  //   // Only fetch if description is missing AND not already fetching the book
+  //   booksBeingFetched.add(book.id);
+  //   await fetchDescriptionFromGoogleBooks(book);
+  //   await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds
+  // }
   const descriptionHtml = book.description
     ? `
       <div class="description-toggle">
@@ -219,13 +291,21 @@ function addBookToDatabase(bookDetails) {
 }
 
 // Display Books from Database
-onValue(booksInDB, (snapshot) => {
+onValue(booksInDB, async (snapshot) => {
   clearDisplay();
 
   if (!snapshot.val()) return;
 
   const booksArray = Object.values(snapshot.val()).reverse();
-  const booklistHtml = booksArray.map((book) => createBookCard(book)).join("");
+  // const booklistHtml = booksArray.map((book) => createBookCard(book)).join("");
+  // Build HTML for all books. Had to refactor to use async/await. Can do it in for loop, but not in map().
+  const htmlArray = [];
+  for (const book of booksArray) {
+    const html = await createBookCard(book);
+    htmlArray.push(html);
+  }
+
+  const booklistHtml = htmlArray.join("");
   DOM.container.innerHTML = booklistHtml;
 });
 
