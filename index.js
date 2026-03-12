@@ -246,7 +246,8 @@ async function searchGoogleBooks(searchPhrase) {
       cardContainer.className = "book-card"; // Apply your CSS here
 
       // 3. Fill the container with the HTML from your function
-      cardContainer.innerHTML = createBookCard(bookDetails, true);
+      // createBookCard is async (it used to fetch descriptions), so we must await it
+      cardContainer.innerHTML = await createBookCard(bookDetails, true);
 
       // 4. Create the Button
       const addButton = document.createElement("button");
