@@ -22,7 +22,7 @@ const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
 // DOM Selectors
 const DOM = {
-  btnCreateUser: document.getElementById("create-user"),
+  // btnCreateUser: document.getElementById("create-user"),
   btnLoginUser: document.getElementById("login-user"),
   emailInput: document.getElementById("email"),
   passwordInput: document.getElementById("password"),
@@ -358,9 +358,9 @@ DOM.searchContainer.addEventListener("submit", (e) => {
   searchGoogleBooks(searchPhrase);
 });
 
-DOM.btnCreateUser.addEventListener("click", () =>
-  handleAuth(authCreateAccountWithEmail),
-);
+// DOM.btnCreateUser.addEventListener("click", () =>
+//   handleAuth(authCreateAccountWithEmail),
+// );
 DOM.btnLoginUser.addEventListener("click", () =>
   handleAuth(authSignInWithEmail),
 );
