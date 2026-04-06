@@ -225,8 +225,47 @@ async function searchGoogleBooks(searchPhrase) {
     const data = await response.json();
 
     if (!data.items || data.items.length === 0) {
-      DOM.searchResult.innerHTML =
-        '<h2 style="text-align: center;">No results found.</h2>';
+      // DOM.searchResult.innerHTML =
+      // '<h2 style="text-align: center;">No results found.</h2>';
+      // No results found; let's make an entry on our own
+      const bookDetails = {
+        title: DOM.searchInput.value,
+        author: "",
+        image_url: "blank_cover.jpeg",
+        date: DOM.searchDate || "[Date not recorded]",
+        description: "No description available.",
+      };
+      // 2. Create the Card Container
+      const cardContainer = document.createElement("div");
+      cardContainer.className = "book-card"; // Apply your CSS here
+
+      // 3. Fill the container with the HTML from your function
+      // createBookCard is async (it used to fetch descriptions), so we must await it
+      cardContainer.innerHTML = await createBookCard(bookDetails, true);
+
+      // 4. Create the Button
+      const addButton = document.createElement("button");
+      addButton.textContent = "Add";
+      addButton.className = "btn-add";
+
+      // 5. ATTACH TO CARD (This is the fix!)
+      const buttonSlot = cardContainer.querySelector("#button-slot");
+      buttonSlot.appendChild(addButton);
+
+      // 6. ATTACH CARD TO PAGE
+      DOM.searchResult.appendChild(cardContainer);
+
+      // 7. Add Listener
+      addButton.addEventListener("click", () => addBookToDatabase(bookDetails));
+
+      // Add an hr to separate the search results from the main book list
+      // REPLACE THIS:
+      // DOM.searchResult.innerHTML += "<hr>";
+
+      // WITH THIS:
+      const hr = document.createElement("hr");
+      DOM.searchResult.appendChild(hr);
+
       return;
     }
 
